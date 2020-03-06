@@ -38,11 +38,10 @@ KING  - 13
 """
 # -------------------- Imports -------------------- #
 from keras.models import Sequential
-from keras.layers import Dense, Dropout
+from keras.layers import Dense, LeakyReLU
 import numpy as np, pandas as pd, os
 from prettytable import PrettyTable
 from matplotlib import pyplot as plt
-import math
 
 # -------------------- Globals and Configs -------------------- #
 feature_names = list()
@@ -114,9 +113,12 @@ print("Instances in testing data :", len(test_data))
 model = Sequential()
 
 # Input layer
-model.add(Dense(10, use_bias=True, bias_initializer='ones', input_shape = (train_x.shape[1],), activation='sigmoid'))
+model.add(Dense(20, use_bias=True, bias_initializer='zeros', input_shape=(train_x.shape[1],), activation='softmax'))
 
 # Hidden layers
+#model.add(Dense(11, use_bias=True, bias_initializer='ones', input_shape=(train_x.shape[1],), activation='relu'))
+model.add(Dense(10, input_shape=(train_x.shape[1],), activation='tanh'))
+
 
 # Output layer
 model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
@@ -133,9 +135,7 @@ for i in range(len(train_y)):
     if train_y[i] == preds[i]:
         train_matches += 1
 
-print("Matches :", train_matches, '/', len(train_y), '=', train_matches / len(train_y) * 100)
-print("Average Error :", sum([math.fabs(x - y) for x, y in zip(train_y, preds)]) / len(train_y))
-print("RMSE :", math.sqrt(sum([(x - y) ** 2 for x, y in zip(train_y, preds)]) / len(train_y)))
+print("Training set Matches :", train_matches, '/', len(train_y), '=', train_matches / len(train_y) * 100)
 
 plt.plot(train_y, 'bo', label='Original')
 plt.plot(preds, 'ro', label='Predicted')
@@ -151,9 +151,7 @@ for i in range(len(test_y)):
     if test_y[i] == preds[i]:
         test_matches += 1
 
-print("Matches :", test_matches, '/', len(test_y), '=', test_matches / len(test_y) * 100)
-print("Average Error :", sum([math.fabs(x - y) for x, y in zip(test_y, preds)]) / len(test_y))
-print("RMSE :", math.sqrt(sum([(x - y) ** 2 for x, y in zip(test_y, preds)]) / len(test_y)))
+print("Test set Matches :", test_matches, '/', len(test_y), '=', test_matches / len(test_y) * 100)
 
 plt.plot(test_y, 'bo', label='Original')
 plt.plot(preds, 'ro', label='Predicted')
@@ -177,11 +175,12 @@ for iterations in range(50, 500, 50):
     scores = model.evaluate(test_x, test_y_onehot, verbose=0)
     test_accuracies.append(scores[1]* 100)
 
-plt.title('Accuracies for training data')
-plt.plot(range(50, 500, 50), train_accuracies)
-plt.show()
-plt.title('Accuracies for testing data')
-plt.plot(range(50, 500, 50), test_accuracies)
+plt.title('Accuracies for Training/Test data')
+plt.xlabel('Epochs(x10)')
+plt.ylabel('Accuracy %')
+plt.plot(train_accuracies, color='red', lw=2.0, label='Training Accy')
+plt.plot(test_accuracies, color='blue', lw=2.0, label='Test Accy')
+plt.legend(loc='lower right', fontsize=10)
 plt.show()
 
 confMat = [[0] * config.classes for x in range(config.classes)]
@@ -202,4 +201,3 @@ for c in confMat:
     l += 1
 
 print(tab)
-
